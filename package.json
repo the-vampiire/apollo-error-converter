@@ -1,0 +1,37 @@
+{
+  "name": "rethrow-as-apollo",
+  "version": "0.0.1",
+  "description": "Global Apollo Server Error handling made easy. Remove verbose and repetitive resolver / data source Error handling. Ensures no implementation details are ever leaked but internal Error logging is preserved.",
+  "main": "src/index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-vampiire/rethrow-as-apollo.git"
+  },
+  "keywords": [
+    "apollo",
+    "server",
+    "error",
+    "handling",
+    "simple"
+  ],
+  "author": "Vampiire",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/the-vampiire/rethrow-as-apollo/issues"
+  },
+  "homepage": "https://github.com/the-vampiire/rethrow-as-apollo#readme",
+  "devDependencies": {
+    "apollo-server-core": "^2.4.8",
+    "graphql": "^14.2.0"
+  },
+  "peerDependencies": {
+    "apollo-server-core": "2.x",
+    "graphql": "14.x"
+  }
+}
