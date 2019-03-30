@@ -1,5 +1,5 @@
 {
-  "name": "rethrow-as-apollo",
+  "name": "apollo-error-converter",
   "version": "0.0.1",
   "description": "Global Apollo Server Error handling made easy. Remove verbose and repetitive resolver / data source Error handling. Ensures no implementation details are ever leaked but internal Error logging is preserved.",
   "main": "src/index.js",
@@ -21,22 +21,22 @@
     "server",
     "error",
     "handling",
-    "simple"
+    "simple",
+    "mapping"
   ],
   "author": "Vampiire",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/the-vampiire/rethrow-as-apollo/issues"
+    "url": "https://github.com/the-vampiire/apollo-error-converter/issues"
   },
-  "homepage": "https://github.com/the-vampiire/rethrow-as-apollo#readme",
+  "homepage": "https://github.com/the-vampiire/apollo-error-converter#readme",
   "devDependencies": {
     "apollo-server-core": "^2.4.8",
     "graphql": "^14.2.0",
-    "lodash": "^4.17.11"
+    "jest": "^24.6.0"
   },
   "peerDependencies": {
     "apollo-server-core": "2.4.x",
-    "graphql": "14.2.x",
-    "lodash": "4.17.x"
+    "graphql": "14.2.x"
   }
 }
