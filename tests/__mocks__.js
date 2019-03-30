@@ -1,27 +1,37 @@
-const { ApolloError, UserInputError, ValidationError } = require('apollo-server-core');
+const { ApolloError } = require('apollo-server-core');
+const { builMapItemValue, baseItems } = require('../lib/map-items');
 
-const errorMap = {
-  SequelizeValidationError: {
-    message: 'Invalid Felds',
-    errorConstructor: UserInputError,
-    data: error => shapeFieldErrors(error),
-    logger: true,
-  },
+// dummy implementation
+const shapeFieldErrors = error => ({ fields: {} });
 
-  SequelizeUniqueConstraintError: {
-    message: 'Unique Violation',
-    errorConstructor: ValidationError,
-    data: error => shapeFieldErrors(error),
-    logger: console.warn,
-  },
+const InvalidFields = builMapItemValue({
+  baseItem: baseItems.InvalidFields,
+  data: shapeFieldErrors,
+});
 
-  SomeCustomError: {
-    message: 'a custom one',
-    errorConstructor: ApolloError,
-    logger: false,
-  }
+const UniqueConstraint = builMapItemValue({
+  baseItem: baseItems.UniqueConstraint,
+  data: shapeFieldErrors,
+  logger: true,
+});
+
+const CustomOne = builMapItemValue({
+  baseItem: { message: 'a custom one', errorConstructor: ApolloError },
+  data: { docID: 'a doc id' },
+});
+
+const mongooseErrorMap = {
+  ValidatorError: InvalidFields,
+  ValidationError: InvalidFields,
+  DocumentNotFoundError: CustomOne,
+};
+
+const sequelizeErrorMap = {
+  SequelizeValidationError: InvalidFields,
+  SequelizeUniqueConstraintError: UniqueConstraint,
 };
 
 module.exports = {
-  errorMap,
+  mongooseErrorMap,
+  sequelizeErrorMap,
 };
