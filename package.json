@@ -29,6 +29,10 @@
   "bugs": {
     "url": "https://github.com/the-vampiire/apollo-error-converter/issues"
   },
+  "jest": {
+    "collectCoverageFrom": ["lib/*.js"],
+    "coveragePathIgnorePatterns": ["/node_modules/", "/lodash-is-plain-object/"]
+  },
   "homepage": "https://github.com/the-vampiire/apollo-error-converter#readme",
   "devDependencies": {
     "apollo-server-core": "^2.4.8",
