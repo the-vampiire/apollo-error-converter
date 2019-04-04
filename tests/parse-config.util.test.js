@@ -43,7 +43,7 @@ describe('parseConfigOptions: Parses configuration options for ApolloErrorConver
     });
   });
 
-  describe('config.fallback: the fallback ErrorMapItem used for unmapped Errors', () => {
+  describe('config.fallback: the fallback ApolloError constructor or ErrorMapItem used for unmapped Errors', () => {
     test('options.fallback = undefined -> config.fallback = [DEFAULT]', () => {
       const options = {};
       const config = parseConfigOptions(options);
@@ -61,6 +61,13 @@ describe('parseConfigOptions: Parses configuration options for ApolloErrorConver
 
       const config = parseConfigOptions(options);
       expect(config.fallback).toBe(options.fallback);
+    });
+
+    test('options.fallback = ApolloError constructor -> config.fallback uses option constructor as fallback errorConstructor', () => {
+      const expected = { ...defaultFallback, errorConstructor: ForbiddenError };
+      const options = { fallback: ForbiddenError };
+      const config = parseConfigOptions(options);
+      expect(config.fallback).toEqual(expected);
     });
 
     test('options.fallback = invalid ErrorMapItem -> config.fallback = [DEFAULT], emits console warning', () => {
