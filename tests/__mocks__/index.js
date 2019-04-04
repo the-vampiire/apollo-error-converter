@@ -1,5 +1,5 @@
 const { ApolloError } = require('apollo-server-core');
-const { builMapItemValue, baseItems } = require('../lib/map-items');
+const { builMapItemValue, baseItems } = require('../../lib/map-items');
 
 // dummy implementation
 const shapeFieldErrors = error => ({ fields: {} });

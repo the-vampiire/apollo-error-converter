@@ -6,7 +6,7 @@ const {
   ValidationError,
 } = require('apollo-server-core');
 
-const { isApolloErrorConstructor } = require('../src/utils');
+const { isApolloErrorConstructor } = require('../lib/utils');
 
 describe('isApolloErrorConstructor: Determines if the constructor is an ApolloError or subclass', () => {
   describe('valid standard ApolloError/subclass constructors', () => {
