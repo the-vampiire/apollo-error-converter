@@ -11,8 +11,9 @@ const {
 const { ApolloError } = require('apollo-server-core');
 
 // tests will break if either of these shapes change - forces consistent tests
-const { mongooseErrorMap, sequelizeErrorMap } = require('./__mocks__');
+const { mongooseErrorMap, sequelizeErrorMap } = require('./__mocks__/index');
 const {
+  defaultFallback,
   mapItemShape: { requiredKeys, optionalKeys },
 } = require('../lib/constants');
 
@@ -98,7 +99,27 @@ describe('Error Map utilities', () => {
     });
   });
 
-  describe('fallbackIsValid: Ensures the fallback is a valid MapItem configuration or an ApolloError constructor', () => {});
+  describe('fallbackIsValid: Ensures the fallback is a valid MapItem configuration or an ApolloError constructor', () => {
+    test('fallback is undefined: returns false', () => {
+      expect(fallbackIsValid()).toBe(false);
+    });
+
+    test('fallback is a valid ErrorMapItem: returns true', () => {
+      expect(fallbackIsValid(defaultFallback)).toBe(true);
+    });
+
+    test('fallback is an invalid ErrorMapitem: returns false', () => {
+      expect(fallbackIsValid({ message: ''})).toBe(false);
+    });
+
+    test('fallback is a valid ApolloError constructor: returns true', () => {
+      expect(fallbackIsValid(ApolloError)).toBe(true);
+    });
+
+    test('fallback is an invalid constructor: returns false', () => {
+      expect(fallbackIsValid(Error)).toBe(false);
+    });
+  });
 
   describe('validateRequiredMapItemFields: Validates the required Map Item fields presence and shape', () => {
     // arbitrary
