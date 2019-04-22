@@ -10,4 +10,4 @@ jobs:
   include:
     - stage: test
       script:
-        - npm test
+        - npm test:travis
