@@ -1,17 +1,22 @@
 const {
   isOneOfTypes,
-  isMapItemValid,
   mergeErrorMaps,
+  isMapItemValid,
   fallbackIsValid,
   validateErrorMap,
+  parseConstructorArguments,
   validateRequiredMapItemFields,
   validateOptionalMapItemFields,
-} = require('../lib/utils').errorMaps;
+} = require('../lib/utils');
 
-const { ApolloError } = require('apollo-server-core');
+const {
+  ApolloError,
+  ValidationError,
+  UserInputError,
+} = require('apollo-server-core');
 
 // tests will break if either of these shapes change - forces consistent tests
-const { mongooseErrorMap, sequelizeErrorMap } = require('./__mocks__/index');
+const { errorMap, errorMapsArray } = require('./__mocks__');
 const {
   defaultFallback,
   mapItemShape: { requiredKeys, optionalKeys },
@@ -21,17 +26,13 @@ describe('Error Map utilities', () => {
   // will break if mapItemShape changes - forces consistent tests
   describe('validateErrorMap: Validates every Map Item entry in a merged Error Map', () => {
     test('valid merged Error Map: returns valid Error Map', () => {
-      const result = validateErrorMap(
-        sequelizeErrorMap,
-        requiredKeys,
-        optionalKeys,
-      );
-      expect(result).toEqual(sequelizeErrorMap);
+      const result = validateErrorMap(errorMap, requiredKeys, optionalKeys);
+      expect(result).toEqual(errorMap);
     });
 
     test('invalid merged Error Map: throws Invalid Map Item error with item key and value', () => {
       const invalidMap = {
-        ...sequelizeErrorMap,
+        ...errorMap,
         BadKey: {
           message: 'missing constructor',
           logger: true,
@@ -81,21 +82,15 @@ describe('Error Map utilities', () => {
 
   describe('mergeErrorMaps: Consumes and merges ErrorMap Object(s)', () => {
     test('given an Array of ErrorMap elements: returns merged ErrorMap', () => {
-      const errorMaps = [sequelizeErrorMap, mongooseErrorMap];
-      const mapKeys = [
-        ...Object.keys(sequelizeErrorMap),
-        ...Object.keys(mongooseErrorMap),
-      ];
+      const expectedKeys = Object.keys(errorMap);
 
-      const result = mergeErrorMaps(errorMaps);
-      expect(Object.keys(result)).toEqual(mapKeys);
+      const result = mergeErrorMaps(errorMapsArray);
+      expect(Object.keys(result)).toEqual(expectedKeys);
     });
 
     test('given a single pre-merged Errormap: returns the ErrorMap', () => {
-      const mergedErrorMap = { ...sequelizeErrorMap, ...mongooseErrorMap };
-
-      const result = mergeErrorMaps(mergedErrorMap);
-      expect(result).toBe(mergedErrorMap);
+      const result = mergeErrorMaps(errorMap);
+      expect(result).toBe(errorMap);
     });
   });
 
@@ -109,7 +104,7 @@ describe('Error Map utilities', () => {
     });
 
     test('fallback is an invalid ErrorMapitem: returns false', () => {
-      expect(fallbackIsValid({ message: ''})).toBe(false);
+      expect(fallbackIsValid({ message: '' })).toBe(false);
     });
 
     test('fallback is a valid ApolloError constructor: returns true', () => {
@@ -228,6 +223,56 @@ describe('Error Map utilities', () => {
         test(`type: ${type}`, () =>
           expect(isOneOfTypes(value, ofTypes)).toBe(true)),
       );
+    });
+  });
+
+  describe('parseConstructorArguments: extracts the arguments list needed for the MapItem errorConstructor', () => {
+    const oneArg = ValidationError;
+    const twoArg = UserInputError;
+    const threeArg = ApolloError;
+
+    const error = new Error();
+    const mapItemMock = {
+      message: 'a message',
+      code: 'A_CODE',
+      data: { some: 'data' },
+    };
+
+    test('1 arg: returns message argument', () => {
+      const mapItem = { errorConstructor: oneArg, ...mapItemMock };
+
+      const output = parseConstructorArguments(error, mapItem);
+      expect(output).toEqual([mapItem.message]);
+    });
+
+    test('2 arg: returns message and data argument', () => {
+      const mapItem = { errorConstructor: twoArg, ...mapItemMock };
+
+      const output = parseConstructorArguments(error, mapItem);
+      expect(output).toEqual([mapItemMock.message, mapItemMock.data]);
+    });
+
+    test('3 arg: returns message, code, and data argument', () => {
+      const mapItem = { errorConstructor: threeArg, ...mapItemMock };
+      
+      const output = parseConstructorArguments(error, mapItem);
+      expect(output).toEqual([
+        mapItemMock.message,
+        mapItemMock.code,
+        mapItemMock.data,
+      ]);
+    });
+
+    test('multi arg with data function: returns message, code, and executed data argument', () => {
+      const mapItem = {
+        errorConstructor: twoArg,
+        message: mapItemMock.message,
+        data: jest.fn(),
+      };
+
+      const output = parseConstructorArguments(error, mapItem);
+      expect(mapItem.data).toBeCalledWith(error);
+      expect(output).toEqual([mapItemMock.message, mapItem.data()]);
     });
   });
 });
