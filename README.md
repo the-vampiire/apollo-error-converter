@@ -264,9 +264,7 @@ Example usage
 ```js
 const { extendMapItem, mapItemBases: { InvalidFields } } = require('apollo-error-converter');
 
-const mapItem = extendMapItem({
-  baseItem: InvalidFields,
-
+const mapItem = extendMapItem(InvalidFields, {
   message: 'a new message',
   data: error => { /* extract some data */},
 });
@@ -401,13 +399,11 @@ const fallback = {
 };
 
 const errorMap = {
-  'SequelizeValidationError': extendMapItem({
-    baseItem: mapItemBases.InvalidFields,
+  'SequelizeValidationError': extendMapItem(mapItemBases.InvalidFields, {
     data: shapeFieldErrors,
   }),
 
-  'SequelizeUniqueConstraintError': extendMapItem({
-    baseItem: mapItemBases.UniqueConstraint,
+  'SequelizeUniqueConstraintError': extendMapItem(mapItemBases.UniqueConstraint, {
     logger: logger.db, // db specific logger
   }),
 };
