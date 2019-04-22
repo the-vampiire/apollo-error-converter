@@ -1,7 +1,7 @@
 const handlers = require('../lib/error-handlers');
 
 const { mapItemBases } = require('../lib/map-items');
-const { buildMapItemValue } = require('../lib/map-items');
+const { extendMapItem } = require('../lib/map-items');
 const { defaultFallback } = require('../lib/constants');
 
 const loggerSpy = jest
@@ -13,9 +13,8 @@ const loggerSpy = jest
 const mappedError = new Error('original message');
 mappedError.name = 'MappedError';
 
-const mapItem = buildMapItemValue({
+const mapItem = extendMapItem(mapItemBases.InvalidFields, {
   logger: loggerSpy,
-  baseItem: mapItemBases.InvalidFields,
 });
 
 const loggingOffConfig = {
@@ -95,10 +94,7 @@ describe('handleMappedError(): returns converted ApolloError with optional behav
   });
 
   test('MapItem { ..., logger: function }: uses MapItem logger', () => {
-    const customLoggerMapitem = buildMapItemValue({
-      baseItem: mapItem,
-      logger: jest.fn(),
-    });
+    const customLoggerMapitem = extendMapItem(mapItem, { logger: jest.fn() });
 
     const output = handlers.handleMappedError.call(
       defaultConfig,
@@ -110,8 +106,7 @@ describe('handleMappedError(): returns converted ApolloError with optional behav
   });
 
   test('MapItem { ..., data: object }: adds data property to converted ApolloError', () => {
-    const customDataMapitem = buildMapItemValue({
-      baseItem: mapItem,
+    const customDataMapitem = extendMapItem(mapItem, {
       data: { some: 'data' },
     });
 
@@ -126,8 +121,7 @@ describe('handleMappedError(): returns converted ApolloError with optional behav
   });
 
   test('MapItem { ..., data: function }: adds data property of returned value to converted ApolloError', () => {
-    const customDataMapitem = buildMapItemValue({
-      baseItem: mapItem,
+    const customDataMapitem = extendMapItem(mapItem, {
       data: jest.fn(() => ({ some: 'data' })),
     });
 
