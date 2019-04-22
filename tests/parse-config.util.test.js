@@ -1,5 +1,6 @@
 const { ForbiddenError } = require('apollo-server-core');
-const { parseConfigOptions } = require('../lib/utils');
+
+const parseConfigOptions = require('../lib/parse-config-options');
 const { defaultFallback, defaultLogger } = require('../lib/constants');
 
 const warnSpy = jest.spyOn(console, 'warn');
@@ -79,28 +80,28 @@ describe('parseConfigOptions: Parses configuration options for ApolloErrorConver
   });
 
   describe('errorMap: the Error Map used for matching mapped Errors', () => {
-    test('options.errorMaps = undefined -> config.errorMap = {}', () => {
+    test('options.errorMap = undefined -> config.errorMap = {}', () => {
       const options = {};
       const config = parseConfigOptions(options);
       const isEmpyObject = Object.keys(config.errorMap).length === 0;
       expect(isEmpyObject).toBe(true);
     });
 
-    test('options.errorMaps = valid errorMaps -> config.errorMap = merged Error Maps', () => {
-      const errorMaps = {
+    test('options.errorMap = valid errorMaps -> config.errorMap = merged Error Maps', () => {
+      const errorMap = {
         AMappedError: defaultFallback,
         SomeMappedError: { message: '', errorConstructor: ForbiddenError },
       };
-      const options = { errorMaps};
+      const options = { errorMap };
       const config = parseConfigOptions(options);
-      expect(config.errorMap).toBe(errorMaps);
+      expect(config.errorMap).toBe(errorMap);
     });
 
-    test('options.errorMaps contains invalid ErrorMapItem(s) -> config.errorMap = {}, throws Error', () => {
-      const options = { errorMaps: { anInvalidItem: { message: '' } } };
+    test('options.errorMap contains invalid ErrorMapItem(s) -> config.errorMap = {}, throws Error', () => {
+      const options = { errorMap: { anInvalidItem: { message: '' } } };
       try {
         parseConfigOptions(options);
-      } catch(error) {
+      } catch (error) {
         expect(error).toBeDefined();
       }
     });
