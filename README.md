@@ -73,12 +73,27 @@ Here are some highlights:
   - over time your team can develop new MapItems from these logs to customize the handling of recurring Errors 
 
 # Usage
-AEC can have every aspect of its behavior customized through the use of [`options` object](#Options) and [`debug` setting](#Debug) arguments in its constructor. In addition there are two other exports [buildMapItemValue](#buildMapItemValue) and [mapItemBases](#mapItemBases) that can be used to quickly generate or extend [MapItems](#MapItem).
+```js
+const {
+  ApolloErrorConverter, // required: core export
+  extendMapItem, // optional: tool for extending MapItems
+  mapItemBases // optional: MapItem bases for extension of common Errors
+} = require('apollo-error-converter');
+
+// assign it to the formatError option in ApolloError constructor
+new ApolloServer({
+  formatError: new ApolloErrorConverter(), // defaults
+  formatError: new ApolloErrorConstructor({ logger, fallback, errorMap }); // customized
+  formatError: new ApolloErrorConstructor({ logger, fallback, errorMap }, true); // enabled debug mode  
+});
+```
+
+AEC can have every aspect of its behavior customized through the use of [`options` object](#Options) and [`debug` setting](#Debug) arguments in its constructor. In addition there are two other exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases) that can be used to quickly generate or extend [MapItems](#MapItem).
 
 Some examples are available in the [Configurations](#Configurations) section
-- [Default Configuration](#Default%20Configuration) example with no options
-- [Custom Configuration](#Custom%20Configuration) example with options
-- [Full Example](#Full%20Example) for a complete example including ErrorMap, MapItems, and AES configuration
+- [Default Configuration](#Default-Configuration) example with no options
+- [Custom Configuration](#Custom-Configuration) example with options
+- [Full Example](#Full-Example) for a complete example including ErrorMap, MapItems, and AES configuration
 
 ## Options
 AEC constructor signature & defaults: 
@@ -86,7 +101,6 @@ AEC constructor signature & defaults:
 `(options = {}, debug = false) -> formatError function`
 
 The `options` object, its property defaults, and behaviors:
-
 - `logger`: used for logging unmapped Errors
   - default: `console.error`
   - values
@@ -120,7 +134,7 @@ Debug mode behaves as if no `formatError` function exists.
 - default: `false`
 
 # ErrorMap
-The ErrorMap is a registry for handling mapped Errors. It can be passed as a single object or an Array of individual ErrorMaps which are automatically merged (see [Options](#Options) for details).
+The ErrorMap is a registry for mapping Errors that should receive custom handling. It can be passed as a single object or an Array of individual ErrorMaps which are automatically merged (see [Options](#Options) for details).
 
 The structure of the ErrorMap is simple yet portable and extendable for reuse in other projects. It associates an original Error to a [MapItem](#MapItem) configuration by the Error's `name` property. 
 
@@ -132,14 +146,16 @@ const errorMap = {
 };
 ```
 
+If you the Errors thrown in your application are controlled you can throw an object with a `name` property and map its behavior in the ErrorMap.
+
 You can choose to create multiple ErrorMaps specific to each of your underlying data sources or create a single ErrorMap for your entire API service. The choices are available to support any level of complexity or service structure that works for your team. In the future I hope people share their [MapItems](#MapItem) and ErrorMaps to make this process even easier.
 
 # MapItem
-The MapItem represents a single configuration for mapping an Error. A MapItem can be fully customized to handle individual Errors. MapItems can also be reused by assigning them to multiple different Errors in the [ErrorMap](#ErrorMap). 
+The MapItem represents a single configuration for mapping an Error. A MapItem is a customizable rule for how the Error it is mapped to should be handled. MapItems can be reused by assigning them to multiple Errors in the [ErrorMap](#ErrorMap). 
 
-MapItems can be created or extended from a base MapItem using the two additional package exports [buildMapItemValue](#buildMapItemValue) and [mapItemBases](#mapItemBases).
+MapItems can be created using object literals or extended from a base MapItem using the two additional package exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases).
 
-A MapItem configuration is made up of 4 options. Once the MapItem has been created you simply add it to the ErrorMap. Over time, through the use of unmapped Error logs, your team can design new MapItems to handle recurring Errors.
+A MapItem configuration is made up of 5 options that customize how the Error should be handled. Over time, through the use of unmapped Error logs, your team can design new MapItems to handle recurring Errors.
 
 ```js
 const mapItem = {
@@ -186,28 +202,26 @@ const { MyCustomApolloError } = require('./custom-errors');
   - Apollo suggested format: `ALL_CAPS_AND_SNAKE_CASE`
   - **note: the `code` option is only applied to the following `ApolloError` types (this is by Apollo design)**
     - `ApolloError` base class and custom subclasses that expose a `code` argument in their constructor
-      - see [Multi-Arg ApolloError](#Multi-Arg%20ApolloError) for information on how the base `ApolloError` and custom subclasses are handled
+      - see [Multi-Arg ApolloError](#Multi-Arg-ApolloError) for information on how the base `ApolloError` and custom subclasses are handled
 - `data`: used for providing supplementary data to the API consumer
   - **note: the `data` option is only applied to the following `ApolloError` types (this is by Apollo design)**
     - `UserInputError` subclass
     - `ApolloError` base class and custom subclasses that expose a `properties` argument in their constructor
-      - see [Multi-Arg ApolloError](#Multi-Arg%20ApolloError) for information on how the base `ApolloError` and custom subclasses are handled
+      - see [Multi-Arg ApolloError](#Multi-Arg-ApolloError) for information on how the base `ApolloError` and custom subclasses are handled
   - values
     - object: preformatted data to be added
     - function: `(originalError) -> {}`
       - a function thatt receives the original Error and returns a formatted `data` object
       - useful for extracting / shaping Error data that you want to expose
 
-# buildMapItemValue
-The `buildMapItemValue()` utility can be used to extend existing MapItems with new configuration options. You can also use it to create new MapItems but it's easier to just create them as object literals. It receives one `options` argument and returns a new MapItem. The `options` argument is the same as that of the [MapItem](#MapItem) with the addition of an optional `baseItem` property.
+# extendMapItem
+The `extendMapItem()` utility can be used to extend existing MapItems with new configuration options. It receives a MapItem to extend and an `options` object argument. It returns a new MapItem extended with the options. The `options` argument is the same as that of the [MapItem](#MapItem).
 
 **If the configuration provided in the `options` results in an invalid MapItem an Error will be thrown.**
 
 ```js
-const mapItem = buildMapItemValue({
-  baseItem: MapItem, // the MapItem to extend
-
-  // new configuration options to be applied
+const mapItem = extendMapItem(mapItemToExtend, {
+  // new configuration options (all optional) to be applied
   code,
   data,
   logger,
@@ -221,7 +235,7 @@ const mapItem = buildMapItemValue({
 ## mapItemBases
 As a convenience there are two MapItems provided that can be used for extension or as MapItems themselves. They each have the minimum `message` and `errorConstructor` properties assigned. 
 
-Note that `InvalidFields` is a 2 argument constructor and `UniqueConstraint` is a 1 argument constructor. For more detail about the implications of this see [Multi-Arg ApolloError](#Multi-Arg%20ApolloError)
+Note that `InvalidFields` is a 2 argument constructor and `UniqueConstraint` is a 1 argument constructor. For more detail about the implications of this see [Multi-Arg ApolloError](#Multi-Arg-ApolloError)
 
 ```js
 /**
@@ -248,9 +262,9 @@ const UniqueConstraint = {
 Example usage
 
 ```js
-const { buildMapItemValue, mapItemBases: { InvalidFields } } = require('apollo-error-converter');
+const { extendMapItem, mapItemBases: { InvalidFields } } = require('apollo-error-converter');
 
-const mapItem = buildMapItemValue({
+const mapItem = extendMapItem({
   baseItem: InvalidFields,
 
   message: 'a new message',
@@ -358,7 +372,7 @@ Here is an example that maps Sequelize Errors. It is all done in one "file" here
 
 ```js
 const { ApolloServer, ApolloError, UserInputError } = require('apollo-server-express');
-const { ApolloErrorConverter, buildMapItemValue, mapItemBases } = require('apollo-error-converter');
+const { ApolloErrorConverter, extendMapItem, mapItemBases } = require('apollo-error-converter');
 
 const logger = require('./logger');
 const { schema, typeDefs } = require('./schema');
@@ -387,12 +401,12 @@ const fallback = {
 };
 
 const errorMap = {
-  'SequelizeValidationError': buildMapItemValue({
+  'SequelizeValidationError': extendMapItem({
     baseItem: mapItemBases.InvalidFields,
     data: shapeFieldErrors,
   }),
 
-  'SequelizeUniqueConstraintError': buildMapItemValue({
+  'SequelizeUniqueConstraintError': extendMapItem({
     baseItem: mapItemBases.UniqueConstraint,
     logger: logger.db, // db specific logger
   }),
