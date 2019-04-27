@@ -3,9 +3,8 @@ const { ForbiddenError } = require('apollo-server-core');
 const parseConfigOptions = require('../lib/parse-config-options');
 const { defaultFallback, defaultLogger } = require('../lib/constants');
 
-const warnSpy = jest.spyOn(console, 'warn');
-
 describe('parseConfigOptions: Parses configuration options for ApolloErrorConverter construction', () => {
+  beforeAll(() => { console.warn = jest.fn(); });
   afterEach(() => jest.clearAllMocks());
 
   describe('config.shouldLog: controls whether logging should occur in mapped (ErrorMapItem logging option) and unmapped Errors', () => {
@@ -40,7 +39,7 @@ describe('parseConfigOptions: Parses configuration options for ApolloErrorConver
       const options = { logger: 'a string' };
       const config = parseConfigOptions(options);
       expect(config.logger).toBe(defaultLogger);
-      expect(warnSpy).toBeCalled();
+      expect(console.warn).toBeCalled();
     });
   });
 
@@ -75,7 +74,7 @@ describe('parseConfigOptions: Parses configuration options for ApolloErrorConver
       const options = { fallback: { message: '' } };
       const config = parseConfigOptions(options);
       expect(config.fallback).toBe(defaultFallback);
-      expect(warnSpy).toBeCalled();
+      expect(console.warn).toBeCalled();
     });
   });
 
