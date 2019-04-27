@@ -1,6 +1,7 @@
 # Apollo Error Converter
 [![Build Status](https://travis-ci.org/the-vampiire/apollo-error-converter.svg?branch=master)](https://travis-ci.org/the-vampiire/apollo-error-converter)
 [![Coverage Status](https://coveralls.io/repos/github/the-vampiire/apollo-error-converter/badge.svg?branch=master)](https://coveralls.io/github/the-vampiire/apollo-error-converter?branch=master)
+![NPM Package](https://img.shields.io/npm/v/apollo-error-converter.svg?label=NPM:%20apollo-error-converter)
 
 A utility for greatly simplifying GraphQL Apollo Server Error handling without sacrificing core principles:
 
@@ -73,6 +74,8 @@ Here are some highlights:
   - over time your team can develop new MapItems from these logs to customize the handling of recurring Errors 
 
 # Usage
+Install using [npm](https://npmjs.org/apollo-error-converter): `npm i apollo-error-converter`
+
 ```js
 const {
   ApolloErrorConverter, // required: core export
