@@ -137,28 +137,57 @@ Debug mode behaves as if no `formatError` function exists.
 - default: `false`
 
 # ErrorMap
-The ErrorMap is a registry for mapping Errors that should receive custom handling. It can be passed as a single object or an Array of individual ErrorMaps which are automatically merged (see [Options](#Options) for details).
+The ErrorMap is a registry for mapping Errors that should receive custom handling. It can be passed as a single object or an Array of individual ErrorMaps which are automatically merged (see [Options](#Options) for details). See [the following section](#How-to-create-your-ErrorMap) for tips on designing your ErrorMap.
 
-The structure of the ErrorMap is simple yet portable and extendable for reuse in other projects. It associates an original Error to a [MapItem](#MapItem) configuration by the Error's `name` property. 
+The structure of the ErrorMap is simple yet portable and extendable for reuse in other projects. It associates an original Error to a [MapItem](#MapItem) configuration by the Error's `name` or `code` property.
+
+Core Node Errors use the `code` property to distinguish themselves. However, 3rd party libraries with custom Errors use a mixture of both `.name` and `.code` properties since no standard is enforced. Your own custom Errors themselves should expose one (or both) of these properties as a best practice. To support a wide range of use cases AEC accepts either property for identification.
 
 ```js
 const errorMap = {
   ErrorName: MapItem,
-  OtherErrorName: MapItem,
+  ErrorCode: OtherMapItem,
+  OtherErrorName: MapItem, // reuse MapItem configurations
   ...
 };
 ```
 
-If you the Errors thrown in your application are controlled you can throw an object with a `name` property and map its behavior in the ErrorMap.
+Error `name` properties will always be Strings. Most Error `codes` are also Strings. Because all JS Object keys are stored (and retrieved) as Strings you can pass either a Number or String `code` for each entry. 
 
 You can choose to create multiple ErrorMaps specific to each of your underlying data sources or create a single ErrorMap for your entire API service. The choices are available to support any level of complexity or service structure that works for your team. In the future I hope people share their [MapItems](#MapItem) and ErrorMaps to make this process even easier.
 
+## How to create your ErrorMap
+When designing your ErrorMap you need to determine which identifier (`name` or `code` property of the Error object) to use as a key. Once you know the identifier you can assign a new or re-use an existing [MapItem](#MapItem) to that entry in the ErrorMap. Here are some suggestions on determining the identifiers:
+
+Using AEC logged Errors
+- Because unmapped Errors are automatically logged (unless you explicitly turn off logging) you can use reflect on common Errors showing up in your logs and create [MapItems](#MapItem) to handle them
+  - check the `name` and `code` property of the Error in your log files
+  - determine which is suitable as an identifier and create an entry in your ErrorMap 
+
+Determining identifiers during development
+- Inspect Errors during testing / development
+  - log the Error itself or `error.name` and `error.code` properties to determine which identifier is suitable
+
+Determining from Library code
+- Some libraries organize their custom Errors within a file or module
+  - you can do a GitHub repo search for `Error` which may land you in a file / module designated for custom Errors
+  - see what `code` or `name` properties are associated with the types of Errors you want to map
+- links to some common library's custom Errors
+  - [NodeJS system `code` properties](https://nodejs.org/api/errors.html#errors_common_system_errors)
+    - many 3rd party libs wrap native Node system calls (like HTTP or file usage) which use these Error codes
+    - for example `axios` uses the native `http` module to make its requests - it will throw Errors using the `http` related Error `code`s
+  - [Mongoose (MongoDB ODM) `name` properties](https://github.com/Automattic/mongoose/blob/master/lib/error/mongooseError.js#L30)
+    - **note that Schema index based Errors (like unique constraints)** will have the generic `MongooseError` `name` property. Use the `code` property of the Error to map these types
+      - `error.code = 11000` is associated with unique index violations 
+      - `error.code = 11001` is associated with bulk unique index violations 
+  - [Sequelize (SQL ORM) `name` properties](https://doc.esdoc.org/github.com/sequelize/sequelize/identifiers.html#errors)
+
 # MapItem
-The MapItem represents a single configuration for mapping an Error. A MapItem is a customizable rule for how the Error it is mapped to should be handled. MapItems can be reused by assigning them to multiple Errors in the [ErrorMap](#ErrorMap). 
+The MapItem represents a single configuration for mapping an Error. A MapItem is a customizable rule for how the Error it is mapped to should be handled. MapItems are portable across codebasese and can be reused by assigning them to multiple Error identifiers in the [ErrorMap](#ErrorMap). 
 
 MapItems can be created using object literals or extended from a base MapItem using the two additional package exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases).
 
-A MapItem configuration is made up of 5 options that customize how the Error should be handled. Over time, through the use of unmapped Error logs, your team can design new MapItems to handle recurring Errors.
+A MapItem configuration is made up of 5 options that customize how the Error should be handled:
 
 ```js
 const mapItem = {
@@ -269,10 +298,10 @@ const { extendMapItem, mapItemBases: { InvalidFields } } = require('apollo-error
 
 const mapItem = extendMapItem(InvalidFields, {
   message: 'a new message',
-  data: error => { /* extract some data */},
+  data: error => { /* extract some Error data and return an object */},
 });
 
-// mapItem has the same errorConstructor, new message, new data properties
+// mapItem has the same errorConstructor with new message and data properties
 ```
 
 # Multi-Arg ApolloError
