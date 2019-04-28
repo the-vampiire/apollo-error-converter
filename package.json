@@ -1,6 +1,6 @@
 {
   "name": "apollo-error-converter",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Global Apollo Server Error handling made easy. Remove verbose and repetitive resolver / data source Error handling. Ensures no implementation details are ever leaked while preserving internal Error logging.",
   "main": "src/index.js",
   "directories": {
