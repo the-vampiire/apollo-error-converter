@@ -1,20 +1,21 @@
 # Apollo Error Converter
-[![Build Status](https://travis-ci.org/the-vampiire/apollo-error-converter.svg?branch=master)](https://travis-ci.org/the-vampiire/apollo-error-converter)
-[![Coverage Status](https://coveralls.io/repos/github/the-vampiire/apollo-error-converter/badge.svg?branch=master)](https://coveralls.io/github/the-vampiire/apollo-error-converter?branch=master)
-[![NPM Package](https://img.shields.io/npm/v/apollo-error-converter.svg?label=NPM:%20apollo-error-converter)](https://npmjs.org/apollo-error-converter)
+
+[![Build Status](https://travis-ci.org/the-vampiire/apollo-error-converter.svg?branch=master)](https://travis-ci.org/the-vampiire/apollo-error-converter) [![Coverage Status](https://coveralls.io/repos/github/the-vampiire/apollo-error-converter/badge.svg?branch=master)](https://coveralls.io/github/the-vampiire/apollo-error-converter?branch=master) [![NPM Package](https://img.shields.io/npm/v/apollo-error-converter.svg?label=NPM:%20apollo-error-converter)](https://npmjs.org/apollo-error-converter)
 
 A utility for greatly simplifying GraphQL Apollo Server Error handling without sacrificing core principles:
 
-1) Hide implementation details exposed from Errors thrown by resolvers and their underlying calls
-2) Provide logging of thrown Errors for internal administrative use and records
-3) Provide clean and useful Errors to the clients consuming the API
+1. Hide implementation details exposed from Errors thrown by resolvers and their underlying calls
+2. Provide logging of thrown Errors for internal administrative use and records
+3. Provide clean and useful Errors to the clients consuming the API
 
 # Why was this package made?
-When designing a public facing API it's important to hide implementation details of your codebase for security and consumer experience. By design GraphQL provides a layer of abstraction that hides internal implementations behind its public facing Types, Queries, and Mutations. However, one of the most prevalent sources of leaking implementation details comes from Errors thrown within the API server's resolver functions. 
 
-Thrown Errors should be transparent for internal use (logging) while also being cleaned and shaped for the consumer. The latter is designed to provide the minimum information needed for the consumer to identify and/or resolve the source of the issue. 
+When designing a public facing API it's important to hide implementation details of your codebase for security and consumer experience. By design GraphQL provides a layer of abstraction that hides internal implementations behind its public facing Types, Queries, and Mutations. However, one of the most prevalent sources of leaking implementation details comes from Errors thrown within the API server's resolver functions.
+
+Thrown Errors should be transparent for internal use (logging) while also being cleaned and shaped for the consumer. The latter is designed to provide the minimum information needed for the consumer to identify and/or resolve the source of the issue.
 
 ## Current state of Apollo Server Error handling
+
 Apollo's goals revolve around providing powerful and intuitive tooling while remaining unopinionated with how that tooling should be used. The Apollo team has done a fantastic job with designing their various libraries but Error handling in Apollo Server is still a tedious and repetitious pain point. Let's explore the current state of Error handling in Apollo Server (full documentation can be found [here](https://www.apollographql.com/docs/apollo-server/features/errors)):
 
 - `NODE_ENV=production` strips stack traces from Errors sent in responses
@@ -35,7 +36,7 @@ In order to maintain core principles within the bounds of what Apollo Server mak
   - logging is performed in each resolver
   - Errors can be caught and rethrown in an `ApolloError` format
   - **benefits**
-    - custom handling of Error types with respect to logging and shaping 
+    - custom handling of Error types with respect to logging and shaping
   - **issues**
     - **every single resolver** must have its Errors explicitly handled
     - behavior must be tediously repeated throughout the codebase
@@ -51,14 +52,15 @@ In order to maintain core principles within the bounds of what Apollo Server mak
     - custom handling logic is not portable across codebases
 
 ## Solution
-`apollo-error-converter` is an answer that combines the benefits and negates the issues associated with the previous patterns. The core export `ApolloErrorConverter` [AEC] constructs a utility assigned to the `ApolloServer` constructor `formatError` option and provides intelligent Error handling. It is designed to maintain core principles and provide customizability while abstracting tedious and repetitive logic. 
+
+`apollo-error-converter` is an answer that combines the benefits and negates the issues associated with the previous patterns. The core export `ApolloErrorConverter` [AEC] constructs a utility assigned to the `ApolloServer` constructor `formatError` option and provides easy Error handling. It is designed to maintain core principles while removing tedious and repetitive logic.
 
 At its core AEC is designed to only expose `ApolloError` objects to the API consumer. It accomplishes this by converting all resolver-thrown Errors into a default or customized `ApolloError` equivalent. At the same time it provides customizable logging behavior of original Errors for internal usage.
 
 Here are some highlights:
 
 - never exposes raw Error details like types, messages, data and stack traces
-- only exposes readable and useable `ApolloError` objects that adhere to the GraphQL spec and Apollo Client libs 
+- only exposes readable and useable `ApolloError` objects that adhere to the GraphQL spec and Apollo Client libs
 - **never write Error handling logic in resolvers or underlying functions again!**
   - for backwards compatibility and flexibility
     - any `ApolloError` objects received from resolvers are passed through untouched
@@ -71,9 +73,10 @@ Here are some highlights:
     - custom `ApolloError` conversion
 - ErrorMaps and MapItems are portable and extendable across codebases and teams
 - automatic logging of "unmapped Errors"
-  - over time your team can develop new MapItems from these logs to customize the handling of recurring Errors 
+  - over time your team can develop new MapItems from these logs to customize the handling of recurring Errors
 
 # Usage
+
 Install using [npm](https://npmjs.org/apollo-error-converter): `npm i apollo-error-converter`
 
 ```js
@@ -86,30 +89,34 @@ const {
 // assign it to the formatError option in ApolloError constructor
 new ApolloServer({
   formatError: new ApolloErrorConverter(), // defaults
-  formatError: new ApolloErrorConstructor({ logger, fallback, errorMap }); // customized
-  formatError: new ApolloErrorConstructor({ logger, fallback, errorMap }, true); // enabled debug mode  
+  formatError: new ApolloErrorConverter({ logger, fallback, errorMap }); // customized
+  formatError: new ApolloErrorConverter({ logger, fallback, errorMap }, true); // enabled debug mode
 });
 ```
 
 AEC can have every aspect of its behavior customized through the use of [`options` object](#Options) and [`debug` setting](#Debug) arguments in its constructor. In addition there are two other exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases) that can be used to quickly generate or extend [MapItems](#MapItem).
 
 Some examples are available in the [Configurations](#Configuration) section
+
 - [Default Configuration](#Default-Configuration) example with no options
 - [Custom Configuration](#Custom-Configuration) example with options
 - [Full Example](#Full-Example) for a complete example including ErrorMap, MapItems, and AEC configuration
 
 ## Options
-AEC constructor signature & defaults: 
+
+AEC constructor signature & defaults:
 
 `(options = {}, debug = false) -> formatError function`
 
 The `options` object, its property defaults, and behaviors:
+
 - `logger`: used for logging unmapped Errors
   - default: `console.error`
   - values
     - `false`: disables all logging
     - `true`: enables logging using the default logger
-    - `function`: enables logging using this function
+    - `function`: enables logging using this function / method
+      - **`winston` logger users [see note below](#winston-logger-users)**
 - `fallback`: a MapItem used for handling unmapped Errors
   - default: `{ errorConstructor: ApolloError, message: 'Internal Server Error', logger }`
     - the `logger` property will use `options.logger` or the default logger
@@ -128,8 +135,36 @@ The `options` object, its property defaults, and behaviors:
     - an Error will be thrown by the first `MapItem` that is found to be invalid within the `errorMap` or merged `errorMap`
     - this validation prevents unexpected runtime Errors after server startup
 
-## Debug
-Debug mode behaves as if no `formatError` function exists. 
+## `winston` logger users
+
+`winston` logger "level methods" are bound to the objects they are assigned to. AEC stores the configured logger for internal use. The logger method must be binded to the `winston` logger object when assigned - [read more here](https://github.com/winstonjs/winston/issues/1591#issuecomment-459335734).
+
+- **note: this behavior applies to `winston` logger methods assigned in [MapItem](#MapItem) configurations**
+
+If you do not bind the logger you will receive this error:
+
+```sh
+TypeError: self._addDefaultMeta is not a function
+```
+
+In order to pass a `winston` logger level method as `options.logger` use the following approach:
+
+```js
+const logger = require("./logger"); // winston logger object
+const { ApolloErrorConverter } = require("apollo-error-converter");
+
+new ApolloServer({
+  formatError: new ApolloErrorConverter({
+    // assign logger.<level> as the configured logger
+    logger: logger.error.bind(logger), // bind it to the original winston logger object
+  }),
+});
+```
+
+## Debug Mode
+
+Debug mode behaves as if no `formatError` function exists.
+
 - all Errors are passed through directly from the API server to the consumer
 - to enter debug mode pass `true` as the second argument in the constructor
   - any truthy value will enable debug mode
@@ -137,6 +172,7 @@ Debug mode behaves as if no `formatError` function exists.
 - default: `false`
 
 # ErrorMap
+
 The ErrorMap is a registry for mapping Errors that should receive custom handling. It can be passed as a single object or an Array of individual ErrorMaps which are automatically merged (see [Options](#Options) for details). See [the following section](#How-to-create-your-ErrorMap) for tips on designing your ErrorMap.
 
 The structure of the ErrorMap is simple yet portable and extendable for reuse in other projects. It associates an original Error to a [MapItem](#MapItem) configuration by the Error's `name` or `code` property.
@@ -152,23 +188,27 @@ const errorMap = {
 };
 ```
 
-Error `name` properties will always be Strings. Most Error `codes` are also Strings. Because all JS Object keys are stored (and retrieved) as Strings you can pass either a Number or String `code` for each entry. 
+Error `name` properties will always be Strings. Most Error `codes` are also Strings. Because all JS Object keys are stored (and retrieved) as Strings you can pass either a Number or String `code` for each entry.
 
 You can choose to create multiple ErrorMaps specific to each of your underlying data sources or create a single ErrorMap for your entire API service. The choices are available to support any level of complexity or service structure that works for your team. In the future I hope people share their [MapItems](#MapItem) and ErrorMaps to make this process even easier.
 
 ## How to create your ErrorMap
+
 When designing your ErrorMap you need to determine which identifier (`name` or `code` property of the Error object) to use as a key. Once you know the identifier you can assign a new or re-use an existing [MapItem](#MapItem) to that entry in the ErrorMap. Here are some suggestions on determining the identifiers:
 
 Using AEC logged Errors
+
 - Because unmapped Errors are automatically logged (unless you explicitly turn off logging) you can use reflect on common Errors showing up in your logs and create [MapItems](#MapItem) to handle them
   - check the `name` and `code` property of the Error in your log files
-  - determine which is suitable as an identifier and create an entry in your ErrorMap 
+  - determine which is suitable as an identifier and create an entry in your ErrorMap
 
 Determining identifiers during development
+
 - Inspect Errors during testing / development
   - log the Error itself or `error.name` and `error.code` properties to determine which identifier is suitable
 
 Determining from Library code
+
 - Some libraries organize their custom Errors within a file or module
   - you can do a GitHub repo search for `Error` which may land you in a file / module designated for custom Errors
   - see what `code` or `name` properties are associated with the types of Errors you want to map
@@ -178,12 +218,13 @@ Determining from Library code
     - for example `axios` uses the native `http` module to make its requests - it will throw Errors using the `http` related Error `code`s
   - [Mongoose (MongoDB ODM) `name` properties](https://github.com/Automattic/mongoose/blob/master/lib/error/mongooseError.js#L30)
     - **note that Schema index based Errors (like unique constraints)** will have the generic `MongooseError` `name` property. Use the `code` property of the Error to map these types
-      - `error.code = 11000` is associated with unique index violations 
-      - `error.code = 11001` is associated with bulk unique index violations 
+      - `error.code = 11000` is associated with unique index violations
+      - `error.code = 11001` is associated with bulk unique index violations
   - [Sequelize (SQL ORM) `name` properties](https://doc.esdoc.org/github.com/sequelize/sequelize/identifiers.html#errors)
 
 # MapItem
-The MapItem represents a single configuration for mapping an Error. A MapItem is a customizable rule for how the Error it is mapped to should be handled. MapItems are portable across codebasese and can be reused by assigning them to multiple Error identifiers in the [ErrorMap](#ErrorMap). 
+
+The MapItem represents a single configuration for mapping an Error. A MapItem is a customizable rule for how the Error it is mapped to should be handled. MapItems are portable across codebasese and can be reused by assigning them to multiple Error identifiers in the [ErrorMap](#ErrorMap).
 
 MapItems can be created using object literals or extended from a base MapItem using the two additional package exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases).
 
@@ -192,16 +233,18 @@ A MapItem configuration is made up of 5 options that customize how the Error sho
 ```js
 const mapItem = {
   // REQUIRED
-  message, 
+  message,
   errorConstructor,
 
   // OPTIONAL
   code,
   data,
   logger,
-}
+};
 ```
+
 **REQUIRED**
+
 - `message`: the client-facing message
   - only `String`s are accepted
 - `errorConstructor`: the `ApolloError` constructor to convert the original Error
@@ -211,24 +254,26 @@ const mapItem = {
 ```js
 const { ApolloError, ValidationError, UserInputError, ... } = require('apollo-server');
 // require('apollo-server-express');
-// require('apollo-server-core'); 
+// require('apollo-server-core');
 // etc
 
 // use one of the constructors in the MapItem
 ```
 
 ```js
-const { MyCustomApolloError } = require('./custom-errors');
+const { MyCustomApolloError } = require("./custom-errors");
 
 // use your own custom ApolloError subclass in the MapItem
 ```
 
 **OPTIONAL**
+
 - `logger`: used for logging the original Error
   - values
-    - `false` or `undefined`: does not log 
+    - `false` or `undefined`: does not log
     - `true`: logs using AEC `options.logger`
     - `function`: logs using this function
+      - **`winston` logger users [see note above](#winston-logger-users)**
 - `code`: a formatted code for this type of Error
   - only `String`s are accepted
   - Apollo suggested format: `ALL_CAPS_AND_SNAKE_CASE`
@@ -247,6 +292,7 @@ const { MyCustomApolloError } = require('./custom-errors');
       - useful for extracting / shaping Error data that you want to expose
 
 # extendMapItem
+
 The `extendMapItem()` utility can be used to extend existing MapItems with new configuration options. It receives a MapItem to extend and an `options` object argument. It returns a new MapItem extended with the options. The `options` argument is the same as that of the [MapItem](#MapItem).
 
 **If the configuration provided in the `options` results in an invalid MapItem an Error will be thrown.**
@@ -258,14 +304,15 @@ const mapItem = extendMapItem(mapItemToExtend, {
   data,
   logger,
   message,
-  errorConstructor
+  errorConstructor,
 });
 
 // add the new MapItem to your ErrorMap
 ```
 
 ## mapItemBases
-As a convenience there are two MapItems provided that can be used for extension or as MapItems themselves. They each have the minimum `message` and `errorConstructor` properties assigned. 
+
+As a convenience there are two MapItems provided that can be used for extension or as MapItems themselves. They each have the minimum `message` and `errorConstructor` properties assigned.
 
 Note that `InvalidFields` is a 2 argument constructor and `UniqueConstraint` is a 1 argument constructor. For more detail about the implications of this see [Multi-Arg ApolloError](#Multi-Arg-ApolloError)
 
@@ -276,7 +323,7 @@ Note that `InvalidFields` is a 2 argument constructor and `UniqueConstraint` is 
  * - accepts MapItem.data field
  */
 const InvalidFields = {
-  message: 'Invalid Fields',
+  message: "Invalid Fields",
   errorConstructor: UserInputError,
 };
 
@@ -286,7 +333,7 @@ const InvalidFields = {
  * - does not accept MapItem.data field
  */
 const UniqueConstraint = {
-  message: 'Unique Violation',
+  message: "Unique Violation",
   errorConstructor: ValidationError,
 };
 ```
@@ -294,17 +341,23 @@ const UniqueConstraint = {
 Example usage
 
 ```js
-const { extendMapItem, mapItemBases: { InvalidFields } } = require('apollo-error-converter');
+const {
+  extendMapItem,
+  mapItemBases: { InvalidFields },
+} = require("apollo-error-converter");
 
 const mapItem = extendMapItem(InvalidFields, {
-  message: 'a new message',
-  data: error => { /* extract some Error data and return an object */},
+  message: "a new message",
+  data: error => {
+    /* extract some Error data and return an object */
+  },
 });
 
 // mapItem has the same errorConstructor with new message and data properties
 ```
 
 # Multi-Arg ApolloError
+
 All of the `ApolloError` subclasses exported by `apollo-server-X` libs accept a single `message` argument. The only exception is the `UserInputError` subclass which accepts a `message` and `properties` (MapItem `data` option) argument.
 
 The `ApolloError` base class accepts `message`, `code`, and `properties` arguments. Your own custom subclasses may have 1-3 arguments depending on its implementation.
@@ -349,10 +402,11 @@ const customMapItem = {
 # Configuration
 
 ## Default Configuration
+
 To use the defaults all you need to do is instantiate the AEC and assign it to the `formatError` option:
 
 ```js
-const { ApolloErrorConverter } = require('apollo-error-converter');
+const { ApolloErrorConverter } = require("apollo-error-converter");
 
 // assign it to the formatError option
 new ApolloServer({
@@ -361,6 +415,7 @@ new ApolloServer({
 ```
 
 Behaviors for Errors received in `formatError`:
+
 - unmapped Errors
   - logged by default `logger`
   - converted using default `fallback`
@@ -372,17 +427,20 @@ Behaviors for Errors received in `formatError`:
   - passed through
 
 ## Custom Configuration
+
 ```js
-const { ApolloErrorConverter } = require('apollo-error-converter');
+const { ApolloErrorConverter } = require("apollo-error-converter");
 
 // assign it to the formatError option
 new ApolloServer({
   formatError: new ApolloErrorConverter({ logger, fallback, errorMap }),
   // sets debug mode to true
-  // formatError: new ApolloErrorConverter({ logger, fallback, errorMap }, true), 
+  // formatError: new ApolloErrorConverter({ logger, fallback, errorMap }, true),
 });
 ```
+
 Behaviors for Errors received in `formatError`:
+
 - **if `debug` mode is enabled no action is taken, see [Debug](#Debug)**
 - unmapped Errors
   - logged using
@@ -398,21 +456,30 @@ Behaviors for Errors received in `formatError`:
   - passed through
 
 ## Full Example
+
 Here is an example that maps Sequelize Errors. It is all done in one "file" here for readability but would likely be separated in a real project.
 
 ```js
-const { ApolloServer, ApolloError, UserInputError } = require('apollo-server-express');
-const { ApolloErrorConverter, extendMapItem, mapItemBases } = require('apollo-error-converter');
+const {
+  ApolloServer,
+  ApolloError,
+  UserInputError,
+} = require("apollo-server-express");
+const {
+  ApolloErrorConverter,
+  extendMapItem,
+  mapItemBases,
+} = require("apollo-error-converter");
 
-const logger = require('./logger');
-const { schema, typeDefs } = require('./schema');
+const logger = require("./logger");
+const { schema, typeDefs } = require("./schema");
 
 /**
  * Extracts and shapes field errors from a Sequelize Error object
  * @param {ValidationError} validationError Sequelize ValidationError or subclass
  * @return {{ fieldName: string }} field errors object in { field: message, } form
  */
-const shapeFieldErrors = (validationError) => {
+const shapeFieldErrors = validationError => {
   const { errors } = validationError;
   if (!errors) return {};
 
@@ -425,17 +492,17 @@ const shapeFieldErrors = (validationError) => {
 };
 
 const fallback = {
-  message: 'Internal Error',
-  code: 'INTERNAL_SERVER_ERROR',
+  message: "Internal Error",
+  code: "INTERNAL_SERVER_ERROR",
   errorConstructor: ApolloError,
 };
 
 const errorMap = {
-  'SequelizeValidationError': extendMapItem(mapItemBases.InvalidFields, {
+  SequelizeValidationError: extendMapItem(mapItemBases.InvalidFields, {
     data: shapeFieldErrors,
   }),
 
-  'SequelizeUniqueConstraintError': extendMapItem(mapItemBases.UniqueConstraint, {
+  SequelizeUniqueConstraintError: extendMapItem(mapItemBases.UniqueConstraint, {
     logger: logger.db, // db specific logger
   }),
 };
@@ -454,6 +521,7 @@ module.exports = new ApolloServer({
 ```
 
 Behaviors for Errors received in `formatError`:
+
 - unmapped Errors
   - logged by `logger.error` method from a `winston` logger
   - converted using custom `fallback`
