@@ -1,7 +1,7 @@
 # Apollo Error Converter
 [![Build Status](https://travis-ci.org/the-vampiire/apollo-error-converter.svg?branch=master)](https://travis-ci.org/the-vampiire/apollo-error-converter)
 [![Coverage Status](https://coveralls.io/repos/github/the-vampiire/apollo-error-converter/badge.svg?branch=master)](https://coveralls.io/github/the-vampiire/apollo-error-converter?branch=master)
-![NPM Package](https://img.shields.io/npm/v/apollo-error-converter.svg?label=NPM:%20apollo-error-converter)
+[![NPM Package](https://img.shields.io/npm/v/apollo-error-converter.svg?label=NPM:%20apollo-error-converter)](https://npmjs.org/apollo-error-converter)
 
 A utility for greatly simplifying GraphQL Apollo Server Error handling without sacrificing core principles:
 
@@ -93,10 +93,10 @@ new ApolloServer({
 
 AEC can have every aspect of its behavior customized through the use of [`options` object](#Options) and [`debug` setting](#Debug) arguments in its constructor. In addition there are two other exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases) that can be used to quickly generate or extend [MapItems](#MapItem).
 
-Some examples are available in the [Configurations](#Configurations) section
+Some examples are available in the [Configurations](#Configuration) section
 - [Default Configuration](#Default-Configuration) example with no options
 - [Custom Configuration](#Custom-Configuration) example with options
-- [Full Example](#Full-Example) for a complete example including ErrorMap, MapItems, and AES configuration
+- [Full Example](#Full-Example) for a complete example including ErrorMap, MapItems, and AEC configuration
 
 ## Options
 AEC constructor signature & defaults: 
@@ -124,7 +124,7 @@ The `options` object, its property defaults, and behaviors:
     - ErrorMap object with all of your MapItem configurations
     - `[ErrorMap]`: an Array of individual ErrorMaps
       - will be merged into a single ErrorMap object internally
-  - **note: the `errorMap` is validated during construction of AES**
+  - **note: the `errorMap` is validated during construction of AEC**
     - an Error will be thrown by the first `MapItem` that is found to be invalid within the `errorMap` or merged `errorMap`
     - this validation prevents unexpected runtime Errors after server startup
 
@@ -334,7 +334,7 @@ In order to provide a dynamic API for this package a standard had to be set for 
     - `ApolloError` base class
     - your own custom subclass
 
-While you are free to implement your own custom subclasses, a simple solution is to use the base `ApolloError` class. The only benefit of implementing your own subclass is to have a custom `name` property. However, most API consumers will utilize the `code` property rather than `name`. In terms of AES functionality there is no distinction between the base class and your own subclass.
+While you are free to implement your own custom subclasses, a simple solution is to use the base `ApolloError` class. The only benefit of implementing your own subclass is to have a custom `name` property. However, most API consumers will utilize the `code` property rather than `name`. In terms of AEC functionality there is no distinction between the base class and your own subclass.
 
 ```js
 const customMapItem = {
