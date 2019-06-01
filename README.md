@@ -224,9 +224,11 @@ Determining from Library code
 
 # MapItem
 
-The MapItem represents a single configuration for mapping an Error. A MapItem is a customizable rule for how the Error it is mapped to should be handled. MapItems are portable across codebasese and can be reused by assigning them to multiple Error identifiers in the [ErrorMap](#ErrorMap).
+The MapItem represents a single configuration for mapping an Error in an ErrorMap. You can also set AEC `options.fallback` to a MapItem to customize how unmapped Errors should be converted.
 
-MapItems can be created using object literals or extended from a base MapItem using the two additional package exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases).
+A MapItem is a customizable rule for how the Error it is mapped to should be handled. MapItems are portable across codebasese and can be reused by assigning them to multiple Error identifiers in the [ErrorMap](#ErrorMap).
+
+MapItems can be created using object literals or extended from another MapItem using the additional package export [extendMapItem](#extendMapItem).
 
 A MapItem configuration is made up of 5 options that customize how the Error should be handled:
 
@@ -288,7 +290,7 @@ const { MyCustomApolloError } = require("./custom-errors");
   - values
     - object: preformatted data to be added
     - function: `(originalError) -> {}`
-      - a function thatt receives the original Error and returns a formatted `data` object
+      - a function that receives the original Error and returns a formatted `data` object
       - useful for extracting / shaping Error data that you want to expose
 
 # extendMapItem
@@ -457,7 +459,9 @@ Behaviors for Errors received in `formatError`:
 
 ## Full Example
 
-Here is an example that maps Sequelize Errors. It is all done in one "file" here for readability but would likely be separated in a real project.
+Here is an example that maps Sequelize Errors and uses `winston` logger methods. It is all done in one file here for readability but would likely be separated in a real project.
+
+A good idea for organization is to have each data source (db or service) used in your API export their corresponding ErrorMap. You can also centralize your ErrorMaps as a team-scoped (or public!) package that you install in your APIs. You can then merge these ErrorMaps by passing them as an Array to AEC `options` (see below).
 
 ```js
 const {
@@ -471,7 +475,7 @@ const {
   mapItemBases,
 } = require("apollo-error-converter");
 
-const logger = require("./logger");
+const logger = require("./logger"); // winston logger, must be binded
 const { schema, typeDefs } = require("./schema");
 
 /**
@@ -497,20 +501,21 @@ const fallback = {
   errorConstructor: ApolloError,
 };
 
-const errorMap = {
+const sequelizeErrorMap = {
   SequelizeValidationError: extendMapItem(mapItemBases.InvalidFields, {
     data: shapeFieldErrors,
   }),
 
   SequelizeUniqueConstraintError: extendMapItem(mapItemBases.UniqueConstraint, {
-    logger: logger.db, // db specific logger
+    logger: logger.db.bind(logger), // db specific logger, winston logger must be binded
   }),
 };
 
 const formatError = new ApolloErrorConverter({
-  errorMap,
+  errorMap: sequelizeErrorMap,
+  // errorMap: [sequelizeErrorMap, ...otherDataSourceErrorMap] for merging multiple
   fallback,
-  logger: logger.error, // error specific logger
+  logger: logger.error.bind(logger), // error specific logger, winston logger must be binded
 });
 
 module.exports = new ApolloServer({
