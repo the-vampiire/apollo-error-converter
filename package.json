@@ -1,6 +1,8 @@
 {
   "name": "apollo-error-converter",
   "version": "0.1.0",
+  "author": "Vampiire",
+  "license": "MIT",
   "description": "Global Apollo Server Error handling made easy. Remove verbose and repetitive resolver / data source Error handling. Ensures no implementation details are ever leaked while preserving internal Error logging.",
   "main": "lib/index.js",
   "directories": {
@@ -11,7 +13,7 @@
     "test": "jest",
     "test:core": "jest */*.core.test*",
     "test:utils": "jest */*.util.test*",
-    "test:travis": "jest --coverage --coverageReporters=text-lcov | coveralls"
+    "test:travis": "jest --no-cache --coverage --coverageReporters=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
@@ -25,29 +27,66 @@
     "simple",
     "mapping"
   ],
-  "author": "Vampiire",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/the-vampiire/apollo-error-converter/issues"
   },
   "jest": {
     "collectCoverageFrom": [
-      "lib/*.js"
+      "lib/*/*.js",
+      "!lib/*/index.js"
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      "/lodash-is-plain-object/"
+      "/lib/utils/lodash-is-plain-object/"
     ]
   },
   "homepage": "https://github.com/the-vampiire/apollo-error-converter#readme",
   "devDependencies": {
+    "@types/jest": "^24.0.15",
     "apollo-server-core": "^2.4.8",
     "coveralls": "^3.0.3",
     "graphql": "^14.2.0",
-    "jest": "^24.6.0"
+    "jest": "^24.6.0",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-config-prettier": "^4.3.0",
+    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-jest": "^22.6.4"
   },
   "peerDependencies": {
-    "apollo-server-core": "2.4.x",
-    "graphql": "14.2.x"
+    "apollo-server-core": "2.x.x",
+    "graphql": "14.x.x"
+  },
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "commonjs": true,
+      "jest/globals": true
+    },
+    "extends": [
+      "prettier",
+      "airbnb-base",
+      "plugin:jest/recommended"
+    ],
+    "plugins": [
+      "jest"
+    ],
+    "globals": {
+      "Atomics": "readonly",
+      "SharedArrayBuffer": "readonly"
+    },
+    "parserOptions": {
+      "ecmaVersion": 2018
+    },
+    "rules": {
+      "quotes": [
+        "error",
+        "double"
+      ],
+      "max-len": [
+        0,
+        100
+      ]
+    }
   }
 }
