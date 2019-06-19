@@ -32,7 +32,8 @@
   },
   "jest": {
     "collectCoverageFrom": [
-      "lib/*.js"
+      "lib/*/*.js",
+      "!lib/*/index.js"
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
