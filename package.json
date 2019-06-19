@@ -4,7 +4,7 @@
   "author": "Vampiire",
   "license": "MIT",
   "description": "Global Apollo Server Error handling made easy. Remove verbose and repetitive resolver / data source Error handling. Ensures no implementation details are ever leaked while preserving internal Error logging.",
-  "main": "lib/index.js",
+  "main": "lib/core/index.js",
   "directories": {
     "lib": "lib",
     "test": "tests"
