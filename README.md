@@ -121,9 +121,9 @@ Behaviors for Errors handled by AEC:
 
 # Customization
 
-AEC can have every aspect of its behavior customized through the [`options` object](#Options) in its constructor. In addition there are two other exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases) that can be used to quickly generate or extend [MapItems](#MapItem) for usage in your API.
+AEC can have its behavior customized through the [`options` object](#Options) in its constructor. In addition there are two other exports [extendMapItem](#extendMapItem) and [mapItemBases](#mapItemBases) that can be used to quickly generate or extend [MapItems](#MapItem).
 
-There is a [Full Example](#Full-Sequelize-Example) at the end of this doc that shows how an API using a Sequelize database source can configure AEC. The example includes defining an ErrorMap, MapItems, and using a `winston` logger.
+There is a [Full Example](#Full-Sequelize-Example) at the end of this doc that shows how an API using a Sequelize database source can configure AEC. The example includes defining an ErrorMap, MapItems, and using a `winston` logger. There is also a section with tips on [How to create your ErrorMap](#How-to-create-your-ErrorMap).
 
 ## Options
 
@@ -141,9 +141,7 @@ ApolloErrorConverter(options = {}, debug = false) -> formatError function
 const defaultLogger = console.error;
 ```
 
-**custom `options.logger`**
-
-**NOTE: `winston` logger users [see information below](#winston-logger-users)**
+**custom `options.logger`, NOTE: `winston` logger users [see winston usage](#winston-logger-usage)**
 
 ```js
 const options = {
@@ -166,9 +164,7 @@ const defaultFallback = {
 };
 ```
 
-**custom `options.fallback`**
-
-**for details on configuring a custom `fallback` see [MapItem](#MapItem)**
+**custom `options.fallback`, for more details on configuring a custom `fallback` see [MapItem](#MapItem)**
 
 ```js
 const options = {
@@ -180,7 +176,8 @@ const options = {
       // additional pre-formatted data to include
     },
     data: originalError => {
-      // use the original Error to format some data to include
+      // use the original Error to format and return extra data to include
+      return formattedDataObject;
     },
   },
 };
@@ -196,9 +193,7 @@ The ErrorMap associates an Error to a [MapItem](#MapItem) by the `name`, `code` 
 const defaultErrorMap = {};
 ```
 
-**custom `options.errorMap`**
-
-**see [ErrorMap](#ErrorMap) for design details and [MapItem](#MapItem) for configuring an Error mapping**
+**custom `options.errorMap`, see [ErrorMap](#ErrorMap) for design details and [MapItem](#MapItem) for configuring an Error mapping**
 
 ```js
 const options = {
@@ -225,7 +220,7 @@ const options = {
 - an Error will be thrown by the first `MapItem` that is found to be invalid within the `errorMap` or merged `errorMap`
 - this validation prevents unexpected runtime Errors after server startup
 
-## NOTE: `winston` logger users
+## `winston` logger usage
 
 Winston logger "level methods" are bound to the objects they are assigned to. Due to the way [winston is designed](https://github.com/winstonjs/winston/issues/1591#issuecomment-459335734) passing the logger method as `options.logger` will bind `this` to the options object and cause the following Error when used:
 
@@ -323,7 +318,7 @@ const mapItem = {
   - `false`: does not log this Error
   - `true`: logs using AEC `options.logger`
   - `function`: logs using this function
-    - **`winston` logger users [see note above](#winston-logger-users)**
+    - **`winston` logger users [see note on usage](#winston-logger-users)**
 - `code`: a code for this type of Error
   - default: `'INTERNAL_SERVER_ERROR'`
   - Apollo suggested format: `ALL_CAPS_AND_SNAKE_CASE`
@@ -494,6 +489,7 @@ const shapeFieldErrors = validationError => {
 const fallback = {
   message: "Something has gone horribly wrong",
   code: "INTERNAL_SERVER_ERROR",
+  data: () => ({ timestamp: Date.now() }),
 };
 
 const sequelizeErrorMap = {
@@ -526,6 +522,7 @@ Behaviors for Errors received in `formatError`:
 - unmapped Errors
   - logged by `logger.error` method from a `winston` logger
   - converted using custom `fallback`
+    - sets a custom `message`, `code` and `data.timestamp`
 - mapped Errors
   - `SequelizeUniqueConstraintError`
     - extends `UniqueConstraint` from `mapItemBases`
@@ -536,7 +533,7 @@ Behaviors for Errors received in `formatError`:
     - extends `InvalidFields` from `mapItemBases`
     - (from base) uses code `'INVALID_FIELDS'`
     - (from base) uses message `'Invalid Field Values'`
-    - (extended) adds additional data extracted from the original Error by `shapeFieldErrors()`
+    - (extended) adds field error messages extracted from the original Error by `shapeFieldErrors()`
     - does not log
 - `ApolloError` (or subclass) Errors
   - no logging
