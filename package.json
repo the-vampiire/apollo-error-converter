@@ -41,6 +41,9 @@
     ]
   },
   "homepage": "https://github.com/the-vampiire/apollo-error-converter#readme",
+  "dependencies": {
+    "apollo-server-core": "2.x.x"
+  },
   "devDependencies": {
     "@types/jest": "^24.0.15",
     "apollo-server-core": "^2.4.8",
@@ -54,7 +57,6 @@
     "eslint-plugin-jest": "^22.6.4"
   },
   "peerDependencies": {
-    "apollo-server-core": "2.x.x",
     "graphql": "14.x.x"
   },
   "eslintConfig": {
