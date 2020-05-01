@@ -13,7 +13,7 @@
     "test": "jest",
     "test:core": "jest */*.core.test*",
     "test:utils": "jest */*.util.test*",
-    "test:travis": "jest --no-cache --coverage --coverageReporters=text-lcov | coveralls"
+    "test:travis": "jest --no-cache --coverage && coveralls < coverage/lcov.info"
   },
   "repository": {
     "type": "git",
